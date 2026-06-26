@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAT4 Level C Practice Test</title>
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    background: #f0f4f8;
+    color: #1a1a1a;
+  }
+
+  /* ── Layout ── */
+  #app { max-width: 860px; margin: 0 auto; padding: 20px; }
+
+  /* ── Header ── */
+  #header {
+    background: #1B3A6B;
+    color: white;
+    padding: 22px 28px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  #header h1 { font-size: 1.4em; font-weight: 700; }
+  #header p  { font-size: 0.95em; opacity: 0.85; margin-top: 4px; }
+  #timer-box {
+    background: rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 10px 18px;
+    text-align: center;
+    min-width: 120px;
+  }
+  #timer-label { font-size: 0.75em; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; }
+  #timer       { font-size: 1.8em; font-weight: 700; font-family: monospace; }
+  #timer.warning { color: #FFD700; }
+  #timer.danger  { color: #FF6B6B; }
+
+  /* ── Progress bar ── */
+  #progress-bar-wrap {
+    background: #dde3ec;
+    border-radius: 8px;
+    height: 10px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  #progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #2E6DA4, #1B3A6B);
+    border-radius: 8px;
+    transition: width 0.4s;
+    width: 0%;
+  }
+
+  /* ── Section card ── */
+  .section-card {
+    background: white;
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid #eef1f6;
+  }
+  .section-badge {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2em; font-weight: 700; color: white;
+    flex-shrink: 0;
+  }
+  .section-title { font-size: 1.25em; font-weight: 700; }
+  .section-subtitle { font-size: 0.9em; color: #666; margin-top: 2px; }
+
+  .badge-verbal      { background: #1B3A6B; }
+  .badge-quant       { background: #1A6B2A; }
+  .badge-nonverbal   { background: #6B1A6B; }
+  .badge-spatial     { background: #B5500A; }
+
+  /* ── Questions ── */
+  .question-block {
+    margin-bottom: 26px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid #eef1f6;
+  }
+  .question-block:last-of-type { border-bottom: none; }
+
+  .q-label {
+    font-weight: 700;
+    color: #444;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .q-text {
+    font-size: 1.05em;
+    margin-bottom: 14px;
+    line-height: 1.65;
+  }
+  .q-words {
+    font-size: 1.15em;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    background: #f7f9fc;
+    border: 1px solid #dde3ec;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+  }
+  .q-number {
+    font-size: 1.3em;
+    font-weight: 600;
+    font-family: monospace;
+    background: #f7f9fc;
+    border: 1px solid #dde3ec;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Options ── */
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 16px;
+    border: 2px solid #dde3ec;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 1em;
+    background: white;
+    text-align: left;
+    width: 100%;
+  }
+  .option:hover:not(:disabled) { border-color: #2E6DA4; background: #f0f5fb; }
+  .option-letter {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: #eef1f6;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.9em;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .option.selected { border-color: #2E6DA4; background: #eef5fb; }
+  .option.selected .option-letter { background: #2E6DA4; color: white; }
+  .option.correct  { border-color: #1A6B2A; background: #e8f5e9; }
+  .option.correct  .option-letter { background: #1A6B2A; color: white; }
+  .option.wrong    { border-color: #c0392b; background: #fdecea; }
+  .option.wrong    .option-letter { background: #c0392b; color: white; }
+  .option:disabled { cursor: default; }
+
+  /* ── Shape canvas questions ── */
+  .shape-q-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .canvas-wrap { flex-shrink: 0; }
+  canvas { display: block; }
+
+  /* ── Shape options grid ── */
+  .shape-options {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .shape-option {
+    border: 2px solid #dde3ec;
+    border-radius: 8px;
+    padding: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .shape-option:hover:not(:disabled) { border-color: #6B1A6B; background: #f9f0f9; }
+  .shape-option.selected { border-color: #6B1A6B; background: #f3e5f3; }
+  .shape-option.correct  { border-color: #1A6B2A; background: #e8f5e9; }
+  .shape-option.wrong    { border-color: #c0392b; background: #fdecea; }
+  .shape-option span { font-size: 0.85em; font-weight: 700; color: #555; }
+
+  /* ── Feedback ── */
+  .feedback {
+    display: none;
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.95em;
+    font-weight: 600;
+  }
+  .feedback.correct-fb { background: #e8f5e9; color: #1A6B2A; border-left: 4px solid #1A6B2A; }
+  .feedback.wrong-fb   { background: #fdecea; color: #c0392b; border-left: 4px solid #c0392b; }
+  .feedback.show { display: block; }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary   { background: #1B3A6B; color: white; }
+  .btn-primary:hover   { background: #2E6DA4; }
+  .btn-success   { background: #1A6B2A; color: white; }
+  .btn-success:hover   { background: #2E8B35; }
+  .btn-secondary { background: #eef1f6; color: #333; }
+  .btn-secondary:hover { background: #dde3ec; }
+  .btn:disabled  { opacity: 0.5; cursor: default; }
+
+  .check-btn { margin-top: 14px; }
+
+  /* ── Score card ── */
+  .score-card {
+    display: none;
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+  }
+  .score-card.show { display: block; }
+  .score-big { font-size: 3.5em; font-weight: 800; color: #1B3A6B; }
+  .score-label { font-size: 1.1em; color: #666; margin-bottom: 20px; }
+  .score-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    max-width: 500px;
+    margin: 20px auto;
+  }
+  .score-cell {
+    padding: 14px;
+    border-radius: 8px;
+    text-align: left;
+  }
+  .score-cell .sc-name { font-size: 0.85em; font-weight: 700; margin-bottom: 4px; }
+  .score-cell .sc-val  { font-size: 1.4em; font-weight: 800; }
+
+  /* ── Tip box ── */
+  .tip-box {
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 0.95em;
+    color: #5d4037;
+    margin-bottom: 18px;
+  }
+
+  /* ── Screens ── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── Welcome screen ── */
+  #welcome {
+    background: white;
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  #welcome h1 { font-size: 1.8em; color: #1B3A6B; margin-bottom: 12px; }
+  #welcome p  { font-size: 1.05em; color: #444; margin-bottom: 14px; line-height: 1.7; }
+  .battery-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    max-width: 500px;
+    margin: 22px auto;
+    text-align: left;
+  }
+  .battery-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95em;
+  }
+  .bi-v { background: #eef3fb; color: #1B3A6B; }
+  .bi-q { background: #e8f5e9; color: #1A6B2A; }
+  .bi-n { background: #f3e5f3; color: #6B1A6B; }
+  .bi-s { background: #fff3e0; color: #B5500A; }
+
+  @media (max-width: 600px) {
+    .section-card { padding: 18px; }
+    .score-grid   { grid-template-columns: 1fr; }
+    .battery-list { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- WELCOME -->
+  <div id="screen-welcome" class="screen active">
+    <div id="welcome">
+      <h1>CAT4 Level C — Practice Test</h1>
+      <p>This practice test covers all four batteries of the CAT4.<br>
+         Work through each section carefully — there is a gentle timer to help you practise pace,<br>
+         but it will <strong>not</strong> stop you from answering.</p>
+      <div class="battery-list">
+        <div class="battery-item bi-v">📝 Verbal Reasoning<br><small style="font-weight:400">6 questions · ~8 min</small></div>
+        <div class="battery-item bi-q">🔢 Quantitative<br><small style="font-weight:400">6 questions · ~8 min</small></div>
+        <div class="battery-item bi-n">🔷 Non-Verbal<br><small style="font-weight:400">4 questions · ~8 min</small></div>
+        <div class="battery-item bi-s">🌀 Spatial Ability<br><small style="font-weight:400">4 questions · ~8 min</small></div>
+      </div>
+      <p style="color:#888;font-size:0.9em">Try your best! You get to check each answer before moving on.</p>
+      <button class="btn btn-primary" onclick="startTest()" style="margin-top:8px;font-size:1.1em;padding:14px 32px;">
+        Start Practice Test ▶
+      </button>
+    </div>
+  </div>
+
+  <!-- TEST -->
+  <div id="screen-test" class="screen">
+    <div id="header">
+      <div>
+        <h1 id="section-name">Verbal Reasoning</h1>
+        <p id="section-desc">Questions about words and how they connect</p>
+      </div>
+      <div id="timer-box">
+        <div id="timer-label">Section Time</div>
+        <div id="timer">8:00</div>
+      </div>
+    </div>
+    <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+    <div id="question-area"></div>
+    <div style="text-align:right;margin-top:8px;">
+      <button class="btn btn-primary" id="next-section-btn" onclick="nextSection()" style="display:none">
+        Next Section →
+      </button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="screen-results" class="screen">
+    <div class="score-card show">
+      <div class="score-big" id="total-score">0/20</div>
+      <div class="score-label">Total Score</div>
+      <div class="score-grid">
+        <div class="score-cell" style="background:#eef3fb">
+          <div class="sc-name" style="color:#1B3A6B">📝 Verbal</div>
+          <div class="sc-val" id="score-v" style="color:#1B3A6B">—</div>
+        </div>
+        <div class="score-cell" style="background:#e8f5e9">
+          <div class="sc-name" style="color:#1A6B2A">🔢 Quantitative</div>
+          <div class="sc-val" id="score-q" style="color:#1A6B2A">—</div>
+        </div>
+        <div class="score-cell" style="background:#f3e5f3">
+          <div class="sc-name" style="color:#6B1A6B">🔷 Non-Verbal</div>
+          <div class="sc-val" id="score-n" style="color:#6B1A6B">—</div>
+        </div>
+        <div class="score-cell" style="background:#fff3e0">
+          <div class="sc-name" style="color:#B5500A">🌀 Spatial</div>
+          <div class="sc-val" id="score-s" style="color:#B5500A">—</div>
+        </div>
+      </div>
+      <div id="result-message" style="font-size:1.05em;color:#444;margin-bottom:24px;line-height:1.7;"></div>
+      <button class="btn btn-primary" onclick="restartTest()">Try Again ↺</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════════════════════
+const SECTIONS = [
+  {
+    id: 'verbal',
+    name: 'Verbal Reasoning',
+    desc: 'Questions about words and how they connect',
+    badgeClass: 'badge-verbal',
+    color: '#1B3A6B',
+    timeMin: 8,
+    questions: [
+      // Odd One Out
+      {
+        type: 'text',
+        subtype: 'odd',
+        label: 'Odd One Out',
+        stem: 'Four of these words belong together. Which word does NOT belong?',
+        words: 'cat     dog     hamster     rabbit     eagle',
+        options: ['cat','dog','hamster','rabbit','eagle'],
+        answer: 4,
+        explanation: 'Cat, dog, hamster and rabbit are all common pets kept at home. An eagle is a wild bird.'
+      },
+      {
+        type: 'text',
+        subtype: 'odd',
+        label: 'Odd One Out',
+        stem: 'Four of these words belong together. Which word does NOT belong?',
+        words: 'red     blue     cold     green     yellow',
+        options: ['red','blue','cold','green','yellow'],
+        answer: 2,
+        explanation: 'Red, blue, green and yellow are all colours. Cold is not a colour — it is a temperature.'
+      },
+      {
+        type: 'text',
+        subtype: 'odd',
+        label: 'Odd One Out',
+        stem: 'Four of these words belong together. Which word does NOT belong?',
+        words: 'circle     square     triangle     purple     rectangle',
+        options: ['circle','square','triangle','purple','rectangle'],
+        answer: 3,
+        explanation: 'Circle, square, triangle and rectangle are all shapes. Purple is a colour, not a shape.'
+      },
+      // Verbal Analogies
+      {
+        type: 'text',
+        subtype: 'analogy',
+        label: 'Word Analogy',
+        stem: 'Complete the analogy:',
+        words: 'Puppy  is to  dog   →   as   →   kitten  is to  _____?',
+        options: ['pet','small','cat','fur'],
+        answer: 2,
+        explanation: 'A puppy grows into a dog. A kitten grows into a cat.'
+      },
+      {
+        type: 'text',
+        subtype: 'analogy',
+        label: 'Word Analogy',
+        stem: 'Complete the analogy:',
+        words: 'Book  is to  library   →   as   →   painting  is to  _____?',
+        options: ['school','gallery','shop','colour'],
+        answer: 1,
+        explanation: 'Books are kept in a library. Paintings are displayed in a gallery.'
+      },
+      {
+        type: 'text',
+        subtype: 'analogy',
+        label: 'Word Analogy',
+        stem: 'Complete the analogy:',
+        words: 'Hand  is to  glove   →   as   →   foot  is to  _____?',
+        options: ['ankle','toe','sock','shoe'],
+        answer: 3,
+        explanation: 'A glove covers a hand. A shoe covers a foot.'
+      },
+    ]
+  },
+  {
+    id: 'quant',
+    name: 'Quantitative Reasoning',
+    desc: 'Questions about numbers and patterns',
+    badgeClass: 'badge-quant',
+    color: '#1A6B2A',
+    timeMin: 8,
+    questions: [
+      // Number Analogies
+      {
+        type: 'text',
+        subtype: 'numanalogy',
+        label: 'Number Analogy',
+        stem: 'Find the rule, then complete the third pair:',
+        words: '4  →  8         6  →  12         9  →  ?',
+        options: ['15','16','18','20'],
+        answer: 2,
+        explanation: 'The rule is ×2. Each number is doubled. So 9 × 2 = 18.'
+      },
+      {
+        type: 'text',
+        subtype: 'numanalogy',
+        label: 'Number Analogy',
+        stem: 'Find the rule, then complete the third pair:',
+        words: '15  →  10         12  →  7         9  →  ?',
+        options: ['3','4','5','6'],
+        answer: 1,
+        explanation: 'The rule is −5. Five is subtracted each time. So 9 − 5 = 4.'
+      },
+      {
+        type: 'text',
+        subtype: 'numanalogy',
+        label: 'Number Analogy',
+        stem: 'Find the rule, then complete the third pair:',
+        words: '2  →  6         3  →  9         5  →  ?',
+        options: ['10','12','15','20'],
+        answer: 2,
+        explanation: 'The rule is ×3. Each number is multiplied by 3. So 5 × 3 = 15.'
+      },
+      // Number Series
+      {
+        type: 'text',
+        subtype: 'series',
+        label: 'Number Series',
+        stem: 'Find the pattern and work out the next number:',
+        words: '5 ,   10 ,   15 ,   20 ,   ___',
+        options: ['22','24','25','30'],
+        answer: 2,
+        explanation: 'The pattern is +5 each time. So 20 + 5 = 25.'
+      },
+      {
+        type: 'text',
+        subtype: 'series',
+        label: 'Number Series',
+        stem: 'Find the pattern and work out the next number:',
+        words: '3 ,   7 ,   11 ,   15 ,   ___',
+        options: ['16','17','19','20'],
+        answer: 2,
+        explanation: 'The pattern is +4 each time. So 15 + 4 = 19.'
+      },
+      {
+        type: 'text',
+        subtype: 'series',
+        label: 'Number Series',
+        stem: 'Find the pattern and work out the next number:',
+        words: '64 ,   32 ,   16 ,   8 ,   ___',
+        options: ['2','4','6','8'],
+        answer: 1,
+        explanation: 'The pattern is ÷2 each time. Each number is halved. So 8 ÷ 2 = 4.'
+      },
+    ]
+  },
+  {
+    id: 'nonverbal',
+    name: 'Non-Verbal Reasoning',
+    desc: 'Questions about shapes and patterns — no reading needed',
+    badgeClass: 'badge-nonverbal',
+    color: '#6B1A6B',
+    timeMin: 8,
+    questions: [
+      // Figure Classification
+      {
+        type: 'shape-classify',
+        label: 'Figure Classification',
+        stem: 'Four of the five shapes share something in common. Which shape is the ODD ONE OUT?',
+        // 4 circles + 1 square (D is odd)
+        shapes: [
+          {s:'circle', filled:true},
+          {s:'circle', filled:true},
+          {s:'circle', filled:true},
+          {s:'square', filled:true},  // ODD
+          {s:'circle', filled:true},
+        ],
+        answer: 3,
+        explanation: 'A, B, C and E are all circles. D is a square — the odd one out.'
+      },
+      {
+        type: 'shape-classify',
+        label: 'Figure Classification',
+        stem: 'Four of the five shapes share something in common. Which shape is the ODD ONE OUT?',
+        // 4 filled triangles + 1 outline triangle (A is odd)
+        shapes: [
+          {s:'triangle', filled:false},  // ODD
+          {s:'triangle', filled:true},
+          {s:'triangle', filled:true},
+          {s:'triangle', filled:true},
+          {s:'triangle', filled:true},
+        ],
+        answer: 0,
+        explanation: 'B, C, D and E are all filled (solid black) triangles. A is an empty outline — the odd one out.'
+      },
+      // Figure Matrices
+      {
+        type: 'shape-matrix',
+        label: 'Figure Matrix',
+        stem: 'Look at the pattern in the grid. Which shape completes the missing box?',
+        // Row 1: small circle → large circle
+        // Row 2: small square → ? (large square)
+        grid: [
+          [{s:'circle',filled:true,size:14},{s:'circle',filled:true,size:28}],
+          [{s:'square',filled:true,size:14},null]
+        ],
+        // Options: A=circle(wrong shape), B=large square(correct), C=outline square(wrong fill), D=small square(wrong size)
+        matrixOptions: [
+          {s:'circle',filled:true,size:26},
+          {s:'square',filled:true,size:28},   // CORRECT
+          {s:'square',filled:false,size:26},
+          {s:'square',filled:true,size:14},
+        ],
+        answer: 1,
+        explanation: 'Pattern: left = small, right = large. Top = circles, bottom = squares. So the missing shape is a LARGE FILLED SQUARE.'
+      },
+      {
+        type: 'shape-matrix',
+        label: 'Figure Matrix',
+        stem: 'Look at the pattern in the grid. Which shape completes the missing box?',
+        // Row 1: filled triangle → outline triangle
+        // Row 2: filled diamond → ? (outline diamond)
+        grid: [
+          [{s:'triangle',filled:true,size:22},{s:'triangle',filled:false,size:22}],
+          [{s:'diamond',filled:true,size:22},null]
+        ],
+        matrixOptions: [
+          {s:'diamond',filled:true,size:22},     // wrong fill
+          {s:'triangle',filled:false,size:20},    // wrong shape
+          {s:'diamond',filled:false,size:22},     // CORRECT
+          {s:'circle',filled:false,size:18},      // wrong shape
+        ],
+        answer: 2,
+        explanation: 'Pattern: left column = filled, right column = outline. Top = triangles, bottom = diamonds. So the missing shape is an OUTLINE DIAMOND.'
+      },
+    ]
+  },
+  {
+    id: 'spatial',
+    name: 'Spatial Ability',
+    desc: 'Questions about shapes moving and folding in space',
+    badgeClass: 'badge-spatial',
+    color: '#B5500A',
+    timeMin: 8,
+    questions: [
+      // Paper folding
+      {
+        type: 'paper-fold',
+        label: 'Paper Folding',
+        stem: 'A square piece of paper is folded in half (left side placed on top of right side). A hole is punched near the top-right of the folded paper. Which picture shows the paper after it is unfolded?',
+        // dots as [x_fraction, y_fraction] from bottom-left of a unit square
+        foldOptions: [
+          [[0.82, 0.82]],                    // A: one hole top-right only
+          [[0.82, 0.82],[0.18, 0.82]],       // B: CORRECT both top
+          [[0.82, 0.18],[0.18, 0.18]],       // C: both bottom
+          [[0.5,  0.82]],                    // D: one hole top-centre
+        ],
+        answer: 1,
+        explanation: 'Folding left-to-right means the hole is mirrored across the vertical centre fold line. One hole appears top-right AND one appears top-left when unfolded.'
+      },
+      {
+        type: 'paper-fold',
+        label: 'Paper Folding',
+        stem: 'A square piece of paper is folded in half (top half folded down over bottom half). A hole is punched near the bottom-left of the folded paper. Which picture shows the paper after it is unfolded?',
+        foldOptions: [
+          [[0.18, 0.18]],                    // A: one hole bottom-left only
+          [[0.18, 0.18],[0.18, 0.82]],       // B: CORRECT left column top+bottom
+          [[0.82, 0.18],[0.82, 0.82]],       // C: right column
+          [[0.18, 0.5]],                     // D: one hole centre-left
+        ],
+        answer: 1,
+        explanation: 'Folding top-to-bottom means the hole is mirrored across the horizontal centre fold line. The hole appears bottom-left AND top-left when unfolded.'
+      },
+      // Figure Recognition (rotation)
+      {
+        type: 'rotation',
+        label: 'Figure Recognition',
+        stem: 'One of the options is the SAME shape as the one on the left, just rotated. Which one matches?',
+        // Target: F-shape at 0°. Options: A=90°, B=0°(correct), C=180°, D=270°
+        targetAngle: 0,
+        optionAngles: [90, 0, 180, 270],
+        answer: 1,
+        explanation: 'Option B is the same F-shape rotated 0° — it matches the target exactly. The others are different rotations.'
+      },
+      {
+        type: 'rotation',
+        label: 'Figure Recognition',
+        stem: 'One of the options is the SAME shape as the one on the left, just rotated. Which one matches?',
+        // Target: F-shape at 180°. Options: A=0°, B=270°, C=180°(correct), D=90°
+        targetAngle: 180,
+        optionAngles: [0, 270, 180, 90],
+        answer: 2,
+        explanation: 'Option C is the same F-shape rotated to match the target shape. The others are different rotations.'
+      },
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════════════
+let currentSection = 0;
+let answers = {};  // key: "s-q" => selected index
+let scores = { verbal:0, quant:0, nonverbal:0, spatial:0 };
+let timerInterval = null;
+let timeLeft = 0;
+let answeredCount = 0;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CANVAS DRAWING
+// ═══════════════════════════════════════════════════════════════════════════════
+function drawShape(ctx, shapeObj, cx, cy, size) {
+  const { s, filled } = shapeObj;
+  const sz = size || shapeObj.size || 26;
+  ctx.fillStyle   = filled ? '#222' : 'white';
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth   = 2;
+
+  if (s === 'circle') {
+    ctx.beginPath();
+    ctx.arc(cx, cy, sz/2, 0, Math.PI*2);
+    ctx.fill(); ctx.stroke();
+  } else if (s === 'square') {
+    ctx.beginPath();
+    ctx.rect(cx - sz/2, cy - sz/2, sz, sz);
+    ctx.fill(); ctx.stroke();
+  } else if (s === 'triangle') {
+    const h = sz * Math.sqrt(3)/2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - h*2/3);
+    ctx.lineTo(cx - sz/2, cy + h/3);
+    ctx.lineTo(cx + sz/2, cy + h/3);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+  } else if (s === 'diamond') {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - sz/2);
+    ctx.lineTo(cx + sz/2, cy);
+    ctx.lineTo(cx, cy + sz/2);
+    ctx.lineTo(cx - sz/2, cy);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+  } else if (s === 'rectangle') {
+    ctx.beginPath();
+    ctx.rect(cx - sz*0.7, cy - sz*0.38, sz*1.4, sz*0.76);
+    ctx.fill(); ctx.stroke();
+  }
+}
+
+function drawFShape(ctx, cx, cy, size, angleDeg) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(angleDeg * Math.PI / 180);
+  const s = size;
+  ctx.fillStyle = '#222';
+  ctx.beginPath();
+  ctx.moveTo(-s*0.38, -s*0.5);
+  ctx.lineTo(-s*0.38,  s*0.5);
+  ctx.lineTo( s*0.38,  s*0.5);
+  ctx.lineTo( s*0.38,  s*0.3);
+  ctx.lineTo(-s*0.08,  s*0.3);
+  ctx.lineTo(-s*0.08,  s*0.08);
+  ctx.lineTo( s*0.3,   s*0.08);
+  ctx.lineTo( s*0.3,  -s*0.08);
+  ctx.lineTo(-s*0.08, -s*0.08);
+  ctx.lineTo(-s*0.08, -s*0.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function makeFiveShapesCanvas(shapes) {
+  const W = 460, H = 80, n = shapes.length;
+  const sp = W / n;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const labels = 'ABCDE'.split('');
+  ctx.font = '700 12px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#555';
+  shapes.forEach((sh, i) => {
+    const cx = sp * i + sp/2;
+    drawShape(ctx, sh, cx, 36, 28);
+    ctx.fillStyle = '#555';
+    ctx.fillText(labels[i], cx, 72);
+  });
+  return canvas;
+}
+
+function makeMatrixCanvas(grid) {
+  const cs = 68, pad = 4;
+  const rows = grid.length, cols = grid[0].length;
+  const W = cols * cs + 8, H = rows * cs + 8;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  grid.forEach((row, r) => {
+    row.forEach((cell, c) => {
+      const x = c * cs + 4, y = r * cs + 4;
+      ctx.strokeStyle = '#aaa'; ctx.lineWidth = 1.5;
+      ctx.strokeRect(x, y, cs - pad, cs - pad);
+      if (!cell) {
+        ctx.font = '700 28px Arial';
+        ctx.fillStyle = '#bbb';
+        ctx.textAlign = 'center';
+        ctx.fillText('?', x + (cs-pad)/2, y + (cs-pad)/2 + 10);
+      } else {
+        drawShape(ctx, cell, x + (cs-pad)/2, y + (cs-pad)/2, cell.size);
+      }
+    });
+  });
+  return canvas;
+}
+
+function makeShapeOptionCanvas(sh, w, h) {
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  drawShape(ctx, sh, w/2, h/2, sh.size || 26);
+  return canvas;
+}
+
+function makePaperCanvas(dots, w, h) {
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  const ps = Math.min(w, h) - 10;
+  const ox = (w - ps)/2, oy = (h - ps)/2;
+  ctx.fillStyle = '#eee';
+  ctx.strokeStyle = '#888'; ctx.lineWidth = 1.5;
+  ctx.fillRect(ox, oy, ps, ps);
+  ctx.strokeRect(ox, oy, ps, ps);
+  dots.forEach(([xf, yf]) => {
+    ctx.beginPath();
+    ctx.arc(ox + xf*ps, oy + (1-yf)*ps, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fill();
+  });
+  return canvas;
+}
+
+function makeRotationCanvas(angle, w, h, size) {
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  drawFShape(ctx, w/2, h/2, size || 26, angle);
+  return canvas;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderSection(si) {
+  const sec = SECTIONS[si];
+  document.getElementById('section-name').textContent = sec.name;
+  document.getElementById('section-desc').textContent = sec.desc;
+  document.getElementById('next-section-btn').style.display = 'none';
+
+  const area = document.getElementById('question-area');
+  area.innerHTML = '';
+  answeredCount = 0;
+
+  const card = document.createElement('div');
+  card.className = 'section-card';
+
+  // Section header
+  const sh = document.createElement('div');
+  sh.className = 'section-header';
+  sh.innerHTML = `
+    <div class="section-badge ${sec.badgeClass}">${si+1}</div>
+    <div>
+      <div class="section-title">${sec.name}</div>
+      <div class="section-subtitle">${sec.questions.length} questions</div>
+    </div>
+  `;
+  card.appendChild(sh);
+
+  // Tip
+  const tip = document.createElement('div');
+  tip.className = 'tip-box';
+  tip.innerHTML = getTip(sec.id);
+  card.appendChild(tip);
+
+  sec.questions.forEach((q, qi) => {
+    card.appendChild(renderQuestion(si, qi, q));
+  });
+
+  area.appendChild(card);
+  updateProgress();
+}
+
+function getTip(id) {
+  const tips = {
+    verbal:    '💡 <strong>Tip:</strong> Think about what the words <em>mean</em> and what group they belong to. One word won\'t fit the group.',
+    quant:     '💡 <strong>Tip:</strong> Look at what is <em>happening</em> to the number — is it getting bigger or smaller? By how much, or by what times?',
+    nonverbal: '💡 <strong>Tip:</strong> Look at the <em>colour</em>, the <em>shape</em>, and the <em>size</em>. One of those things will be different for the odd one out.',
+    spatial:   '💡 <strong>Tip:</strong> For folding questions, think about where the hole is — and where its <em>mirror image</em> will be on the other side of the fold.',
+  };
+  return tips[id] || '';
+}
+
+function renderQuestion(si, qi, q) {
+  const block = document.createElement('div');
+  block.className = 'question-block';
+  block.id = `qblock-${si}-${qi}`;
+
+  const label = document.createElement('div');
+  label.className = 'q-label';
+  label.textContent = `Question ${qi+1} — ${q.label}`;
+  block.appendChild(label);
+
+  const stem = document.createElement('div');
+  stem.className = 'q-text';
+  stem.textContent = q.stem;
+  block.appendChild(stem);
+
+  if (q.type === 'text') {
+    const wordBox = document.createElement('div');
+    wordBox.className = q.subtype === 'series' || q.subtype === 'numanalogy' ? 'q-number' : 'q-words';
+    wordBox.textContent = q.words;
+    block.appendChild(wordBox);
+    block.appendChild(renderTextOptions(si, qi, q));
+  }
+  else if (q.type === 'shape-classify') {
+    const canvas = makeFiveShapesCanvas(q.shapes);
+    canvas.style.marginBottom = '12px';
+    block.appendChild(canvas);
+    block.appendChild(renderShapeClassifyOptions(si, qi, q));
+  }
+  else if (q.type === 'shape-matrix') {
+    const wrap = document.createElement('div');
+    wrap.className = 'shape-q-wrap';
+    wrap.style.marginBottom = '12px';
+
+    const mc = makeMatrixCanvas(q.grid);
+    const cw = document.createElement('div');
+    cw.className = 'canvas-wrap';
+    cw.appendChild(mc);
+    wrap.appendChild(cw);
+
+    const inst = document.createElement('div');
+    inst.style.cssText = 'font-size:0.95em;color:#555;align-self:center;';
+    inst.textContent = 'Which of the options A–D completes the grid?';
+    wrap.appendChild(inst);
+    block.appendChild(wrap);
+    block.appendChild(renderMatrixOptions(si, qi, q));
+  }
+  else if (q.type === 'paper-fold') {
+    block.appendChild(renderPaperFoldOptions(si, qi, q));
+  }
+  else if (q.type === 'rotation') {
+    block.appendChild(renderRotationOptions(si, qi, q));
+  }
+
+  // Check button
+  const checkBtn = document.createElement('button');
+  checkBtn.className = 'btn btn-primary check-btn';
+  checkBtn.textContent = 'Check Answer';
+  checkBtn.id = `check-${si}-${qi}`;
+  checkBtn.disabled = true;
+  checkBtn.onclick = () => checkAnswer(si, qi, q);
+  block.appendChild(checkBtn);
+
+  // Feedback
+  const fb = document.createElement('div');
+  fb.className = 'feedback';
+  fb.id = `fb-${si}-${qi}`;
+  block.appendChild(fb);
+
+  return block;
+}
+
+function renderTextOptions(si, qi, q) {
+  const wrap = document.createElement('div');
+  wrap.className = 'options';
+  const letters = ['A','B','C','D','E'];
+  q.options.forEach((opt, oi) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.id = `opt-${si}-${qi}-${oi}`;
+    btn.innerHTML = `<span class="option-letter">${letters[oi]}</span> <span>${opt}</span>`;
+    btn.onclick = () => selectOption(si, qi, oi, q.options.length);
+    wrap.appendChild(btn);
+  });
+  return wrap;
+}
+
+function renderShapeClassifyOptions(si, qi, q) {
+  // Use shape row canvas but make it clickable
+  const letters = ['A','B','C','D','E'];
+  const wrap = document.createElement('div');
+  wrap.className = 'shape-options';
+  q.shapes.forEach((sh, oi) => {
+    const btn = document.createElement('button');
+    btn.className = 'shape-option';
+    btn.id = `opt-${si}-${qi}-${oi}`;
+    const c = makeShapeOptionCanvas(sh, 58, 58);
+    btn.appendChild(c);
+    const lbl = document.createElement('span');
+    lbl.textContent = letters[oi];
+    btn.appendChild(lbl);
+    btn.onclick = () => selectShapeOption(si, qi, oi, q.shapes.length, 'shape-option');
+    wrap.appendChild(btn);
+  });
+  return wrap;
+}
+
+function renderMatrixOptions(si, qi, q) {
+  const letters = ['A','B','C','D'];
+  const wrap = document.createElement('div');
+  wrap.className = 'shape-options';
+  q.matrixOptions.forEach((sh, oi) => {
+    const btn = document.createElement('button');
+    btn.className = 'shape-option';
+    btn.id = `opt-${si}-${qi}-${oi}`;
+    const c = makeShapeOptionCanvas(sh, 62, 62);
+    btn.appendChild(c);
+    const lbl = document.createElement('span');
+    lbl.textContent = letters[oi];
+    btn.appendChild(lbl);
+    btn.onclick = () => selectShapeOption(si, qi, oi, q.matrixOptions.length, 'shape-option');
+    wrap.appendChild(btn);
+  });
+  return wrap;
+}
+
+function renderPaperFoldOptions(si, qi, q) {
+  const letters = ['A','B','C','D'];
+  const wrap = document.createElement('div');
+  wrap.className = 'shape-options';
+  q.foldOptions.forEach((dots, oi) => {
+    const btn = document.createElement('button');
+    btn.className = 'shape-option';
+    btn.id = `opt-${si}-${qi}-${oi}`;
+    const c = makePaperCanvas(dots, 72, 72);
+    btn.appendChild(c);
+    const lbl = document.createElement('span');
+    lbl.textContent = letters[oi];
+    btn.appendChild(lbl);
+    btn.onclick = () => selectShapeOption(si, qi, oi, q.foldOptions.length, 'shape-option');
+    wrap.appendChild(btn);
+  });
+  return wrap;
+}
+
+function renderRotationOptions(si, qi, q) {
+  const letters = ['A','B','C','D'];
+  // Target
+  const targetWrap = document.createElement('div');
+  targetWrap.style.cssText = 'display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:10px;';
+  const tBox = document.createElement('div');
+  tBox.style.cssText = 'border:2px solid #dde3ec;border-radius:8px;padding:8px;background:#f7f9fc;text-align:center;';
+  tBox.appendChild(makeRotationCanvas(q.targetAngle, 72, 72, 28));
+  const tLabel = document.createElement('div');
+  tLabel.style.cssText = 'font-size:0.85em;font-weight:700;color:#555;margin-top:4px;';
+  tLabel.textContent = 'TARGET';
+  tBox.appendChild(tLabel);
+  targetWrap.appendChild(tBox);
+  const arrow = document.createElement('div');
+  arrow.style.cssText = 'font-size:1.3em;color:#aaa;';
+  arrow.textContent = '→';
+  targetWrap.appendChild(arrow);
+  const q2 = document.createElement('div');
+  q2.style.cssText = 'font-weight:600;color:#444;font-size:0.95em;';
+  q2.textContent = 'Which option matches?';
+  targetWrap.appendChild(q2);
+
+  const wrap = document.createElement('div');
+  wrap.appendChild(targetWrap);
+
+  const optWrap = document.createElement('div');
+  optWrap.className = 'shape-options';
+  q.optionAngles.forEach((angle, oi) => {
+    const btn = document.createElement('button');
+    btn.className = 'shape-option';
+    btn.id = `opt-${si}-${qi}-${oi}`;
+    btn.appendChild(makeRotationCanvas(angle, 72, 72, 28));
+    const lbl = document.createElement('span');
+    lbl.textContent = letters[oi];
+    btn.appendChild(lbl);
+    btn.onclick = () => selectShapeOption(si, qi, oi, q.optionAngles.length, 'shape-option');
+    optWrap.appendChild(btn);
+  });
+  wrap.appendChild(optWrap);
+  return wrap;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INTERACTION
+// ═══════════════════════════════════════════════════════════════════════════════
+function selectOption(si, qi, oi, n) {
+  const key = `${si}-${qi}`;
+  if (answers[key] !== undefined && answers[key] !== null &&
+      document.getElementById(`check-${si}-${qi}`).textContent === 'Checked') return;
+  answers[key] = oi;
+  for (let i = 0; i < n; i++) {
+    const el = document.getElementById(`opt-${si}-${qi}-${i}`);
+    if (el) el.classList.toggle('selected', i === oi);
+  }
+  document.getElementById(`check-${si}-${qi}`).disabled = false;
+}
+
+function selectShapeOption(si, qi, oi, n, cls) {
+  const key = `${si}-${qi}`;
+  const checkBtn = document.getElementById(`check-${si}-${qi}`);
+  if (checkBtn.textContent === 'Checked') return;
+  answers[key] = oi;
+  for (let i = 0; i < n; i++) {
+    const el = document.getElementById(`opt-${si}-${qi}-${i}`);
+    if (el) el.classList.toggle('selected', i === oi);
+  }
+  checkBtn.disabled = false;
+}
+
+function checkAnswer(si, qi, q) {
+  const key = `${si}-${qi}`;
+  const selected = answers[key];
+  if (selected === undefined || selected === null) return;
+
+  const correct = q.answer;
+  const isCorrect = selected === correct;
+  const n = q.options?.length || q.shapes?.length || q.matrixOptions?.length ||
+            q.foldOptions?.length || q.optionAngles?.length || 4;
+
+  // Style all options
+  for (let i = 0; i < n; i++) {
+    const el = document.getElementById(`opt-${si}-${qi}-${i}`);
+    if (!el) continue;
+    el.disabled = true;
+    el.classList.remove('selected');
+    if (i === correct)  el.classList.add('correct');
+    if (i === selected && !isCorrect) el.classList.add('wrong');
+  }
+
+  // Feedback
+  const fb = document.getElementById(`fb-${si}-${qi}`);
+  if (isCorrect) {
+    fb.className = 'feedback correct-fb show';
+    fb.innerHTML = `✅ Correct! ${q.explanation}`;
+  } else {
+    const letters = ['A','B','C','D','E'];
+    fb.className = 'feedback wrong-fb show';
+    fb.innerHTML = `❌ Not quite. The answer is <strong>${letters[correct]}</strong>. ${q.explanation}`;
+  }
+
+  // Check button
+  const checkBtn = document.getElementById(`check-${si}-${qi}`);
+  checkBtn.textContent = 'Checked';
+  checkBtn.disabled = true;
+
+  // Score
+  if (isCorrect) scores[SECTIONS[si].id]++;
+  answeredCount++;
+  updateProgress();
+
+  // Show Next Section button if all answered
+  if (answeredCount === SECTIONS[currentSection].questions.length) {
+    const nb = document.getElementById('next-section-btn');
+    nb.style.display = 'inline-flex';
+    const isLast = currentSection === SECTIONS.length - 1;
+    nb.textContent = isLast ? 'See Results →' : 'Next Section →';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════════════════════════════════════════
+function startTimer(minutes) {
+  clearInterval(timerInterval);
+  timeLeft = minutes * 60;
+  renderTimer();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    renderTimer();
+    if (timeLeft <= 0) { clearInterval(timerInterval); }
+  }, 1000);
+}
+
+function renderTimer() {
+  const m = Math.floor(Math.abs(timeLeft) / 60);
+  const s = Math.abs(timeLeft) % 60;
+  const el = document.getElementById('timer');
+  const sign = timeLeft < 0 ? '-' : '';
+  el.textContent = `${sign}${m}:${s.toString().padStart(2,'0')}`;
+  el.className = timeLeft <= 0 ? 'danger' : timeLeft <= 60 ? 'warning' : '';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PROGRESS
+// ═══════════════════════════════════════════════════════════════════════════════
+function updateProgress() {
+  const totalQ = SECTIONS.reduce((a,s) => a + s.questions.length, 0);
+  const answered = Object.keys(answers).filter(k =>
+    document.getElementById(`check-${k}`)?.textContent === 'Checked'
+  ).length;
+  const pct = (answered / totalQ) * 100;
+  document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startTest() {
+  answers = {};
+  scores = { verbal:0, quant:0, nonverbal:0, spatial:0 };
+  currentSection = 0;
+  showScreen('screen-test');
+  renderSection(0);
+  startTimer(SECTIONS[0].timeMin);
+}
+
+function nextSection() {
+  currentSection++;
+  if (currentSection >= SECTIONS.length) {
+    showResults();
+    return;
+  }
+  renderSection(currentSection);
+  startTimer(SECTIONS[currentSection].timeMin);
+  window.scrollTo(0, 0);
+}
+
+function showResults() {
+  clearInterval(timerInterval);
+  showScreen('screen-results');
+
+  const total = Object.values(scores).reduce((a,b) => a+b, 0);
+  const maxTotal = SECTIONS.reduce((a,s) => a + s.questions.length, 0);
+
+  document.getElementById('total-score').textContent = `${total}/${maxTotal}`;
+
+  const sMap = { verbal:'v', quant:'q', nonverbal:'n', spatial:'s' };
+  SECTIONS.forEach(sec => {
+    const max = sec.questions.length;
+    const got = scores[sec.id];
+    document.getElementById(`score-${sMap[sec.id]}`).textContent = `${got}/${max}`;
+  });
+
+  const pct = Math.round((total/maxTotal)*100);
+  let msg = '';
+  if (pct === 100) msg = '🌟 Perfect score! Excellent work — you\'re really well prepared for Tuesday!';
+  else if (pct >= 75) msg = '🎉 Great result! You\'re well prepared. Look over any questions you got wrong and you\'ll be ready.';
+  else if (pct >= 50) msg = '👍 Good effort! Review the questions you found tricky, and try again — you\'re getting there.';
+  else msg = '💪 Keep practising! Look at the explanations for the ones you missed — you\'ll improve quickly.';
+  document.getElementById('result-message').textContent = msg;
+  window.scrollTo(0,0);
+}
+
+function restartTest() {
+  startTest();
+}
+</script>
+</body>
+</html>
